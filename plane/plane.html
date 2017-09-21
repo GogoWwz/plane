@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		*{margin:0;padding:0;}
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		window.onload=function(){
+			Game.exe();
+			
+		};
+		
+		var Game={
+
+			//启动程序
+			exe:function(){
+				document.body.style.background="#000";
+				var oDiv=document.createElement("div");
+						oDiv.id="oGameBox";
+						oDiv.style.cssText=
+						"width:300px;height:500px;border:10px solid #fff;margin:50px auto;text-align:center;font-family:'Microsoft yahei';position:relative;overflow:hidden;";
+				document.body.appendChild(oDiv);
+
+				this.init();
+			},
+			//得分
+			score:0,
+
+			//初始化背景
+			init:function(){
+				var This=this;
+				var oDiv=document.getElementById("oGameBox");
+				var oH=document.createElement("h2");
+						oH.innerHTML="飞机大战v1.0 测试版";
+						oH.style.cssText="color:#fff";
+				oDiv.appendChild(oH);		
+
+				for(var i=0;i<4;i++){
+						var oP=document.createElement("p");
+								oP.index=i;
+						var html="";
+						oP.onmouseenter=function(){
+							this.style.background="#663300";
+							this.style.color="#000";
+						}
+						oP.onclick=function(e){
+							e=e||window.event;
+							This.start(this.index,oDiv,e);//注意这里的This和this 之前提前将exe的this指针给了This
+						};
+						switch(i){
+							case 0:
+								html="简单"; 
+								oP.style.cssText=
+								"font-size=10px;color:#fff;width:150px;height:40px;margin:50px auto;text-align:center;line-height:40px;background:yellow;cursor:pointer;";
+								oP.onmouseleave=function(){
+									this.style.background="yellow";
+									this.style.color="#fff";
+								}
+								break;
+							case 1:
+								oP.style.cssText=
+								"font-size=10px;color:#fff;width:150px;height:40px;margin:50px auto;text-align:center;line-height:40px;background:green;cursor:pointer;";
+								html="普通";
+								oP.onmouseleave=function(){
+									this.style.background="green";
+									this.style.color="#fff";
+								}
+								break;
+							case 2:
+								oP.style.cssText=
+								"font-size=10px;color:#fff;width:150px;height:40px;margin:50px auto;text-align:center;line-height:40px;background:red;cursor:pointer;";
+								html="困难";
+								oP.onmouseleave=function(){
+									this.style.background="red";
+									this.style.color="#fff";
+								}
+								break;
+							case 3:
+								oP.style.cssText=
+								"font-size=10px;color:red;width:150px;height:40px;margin:50px auto;text-align:center;line-height:40px;background:blue;cursor:pointer;";
+								oP.style.fontWeight="bold";
+								html="无敌版"; 
+								oP.onmouseleave=function(){
+									this.style.background="blue";
+									this.style.color="red";
+								}
+								break;
+						}	
+						oP.innerHTML=html;
+						oDiv.appendChild(oP);
+				}
+				var oP=document.createElement("p");
+				var html="&copyDoubleD";
+				oP.style.cssText=
+				"font-size=10px;color:#fff;width:75px;height:20px;margin:60px auto;text-align:center;line-height:40px;background:#000;";
+				oP.innerHTML=html;
+				oDiv.appendChild(oP);
+			
+			},
+			//游戏点击开始
+			start:function(index,oGameBox,e){
+				oGameBox.innerHTML="";
+				var oS=document.createElement("span");
+						oS.innerHTML="Score:"+this.score;
+						oS.style.cssText=
+						"position:absolute;top:470px;left:10px;font-size:20px;color:#fff;";
+						oGameBox.appendChild(oS);
+				this.plane(oGameBox,e);
+				this.enemy(oGameBox,oS);
+			},
+			//创建玩家飞机
+			plane:function(oGameBox,e){
+				var x=e.pageX;//事件发生时的鼠标x位置，距离左边
+				var y=e.pageY;//事件发生时的鼠标y位置，距离顶部
+				//console.log(x+","+y);
+				var oPlane=new Image();
+						oPlane.id="plane";
+						oPlane.src="img/p.png";
+						oPlane.width=40;
+						oPlane.height=45;
+				var tY=oGameBox.offsetTop+parseInt(oGameBox.style.borderWidth)+oPlane.height/2;
+				//为盒子顶部距离、边框线的宽度和飞机高度的一半的和
+				var lX=oGameBox.offsetLeft+parseInt(oGameBox.style.borderWidth)+oPlane.width/2;
+				//为盒子左部距离、边框线的宽度和飞机宽度的一半的和
+				window.onresize=function(){
+					lX=oGameBox.offsetLeft+parseInt(oGameBox.style.borderWidth)+oPlane.width/2;
+				};//当浏览器大小调整的时候，重新获取飞机的横向位置，纵向位置定死了不用获取
+				var top=y-tY;
+				var left=x-lX;
+						oPlane.style.cssText="display:block;position:absolute;top:"+top+"px;left:"+left+"px;";
+				oGameBox.appendChild(oPlane);
+
+				var leftMin=-oPlane.width/2;
+				var leftMax=oGameBox.clientWidth-oPlane.width/2;
+				var topMin=0;
+				var topMax=oGameBox.clientHeight-oPlane.height;
+
+				document.onmousemove=function(e){
+					e=e||window.event;
+					var inTop=e.pageY-tY;
+					var inLeft=e.pageX-lX;
+					inTop=Math.min(inTop,topMax);//获取上边界，取当前位置和上边框的最小值，超出时就为上边框的值
+					inTop=Math.max(inTop,topMin);//获取下边界，取当前位置和下边框的最大值，超出时就为下边框的值
+					inLeft=Math.min(inLeft,leftMax);////获取右边界，取当前位置和右边框之间的最小值，超出时就为右边框的值
+					inLeft=Math.max(inLeft,leftMin);//获取左边界，取当前位置和左边框之间的最大值，超出时就为左边框的值
+					oPlane.style.top=inTop+"px";
+					oPlane.style.left=inLeft+"px";
+				};
+				this.biubiubiu(oPlane,oGameBox);
+			},
+			//创建子弹
+			biubiubiu:function(oPlane,oGameBox){
+				this.biuTimer=setInterval(function(){
+					var biu=new Image();
+							biu.className="biu";//申明类名，等下抓取全部子弹进行碰撞判断
+							biu.src="img/biu.png";
+							biu.width=6;
+							biu.height=22;
+							var bTop=oPlane.offsetTop-biu.height+3;
+							var bLeft=oPlane.offsetLeft+oPlane.width/2-biu.width/2;
+							biu.style.cssText="position:absolute;top:"+bTop+"px;left:"+bLeft+"px;";
+					oGameBox.appendChild(biu);
+
+					biu.timer=setInterval(function(){
+						biu.style.top=biu.offsetTop-7+"px";	//top值每秒少了7个像素			
+						if(biu.offsetTop<=-biu.height){
+							clearInterval(biu.timer);
+							biu.parentNode.removeChild(biu);//因为图片在oGameBox上，所以为他的父节点去清楚
+						}//间歇调用一定要记得清楚计时器，不然系统会卡顿
+					},10);//==================子弹飞行速度，每10 毫秒飞行7像素
+				},100);//===================出子弹的速度
+			},
+			//创建敌军
+			enemy:function(oGameBox,oS){
+				this.enemyTimer=setInterval(function(){
+					var oEnemy=new Image();
+							oEnemy.src="img/enemy.png";
+							oEnemy.width=25;
+							oEnemy.height=30;
+					var leftMin=0;
+					var leftMax=oGameBox.clientWidth-oEnemy.width;
+					var left=Math.random()*(leftMax-leftMin)+leftMin;//从一个随机位置产生
+					oEnemy.style.cssText="position:absolute;top:"+(-oEnemy.height)+"px;left:"+left+"px;";
+					oGameBox.appendChild(oEnemy);
+					
+					//var a=Math.random()*9+1;//设置每架敌机的下落速度是不同的
+
+					oEnemy.timer=setInterval(function(){
+						oEnemy.style.top=oEnemy.offsetTop+10+"px";
+						if(oEnemy.offsetTop>=oGameBox.clientHeight){
+								clearInterval(oEnemy.timer);
+								oEnemy.parentNode.removeChild(oEnemy);
+						}//关闭定时器和清楚敌机
+					},50);//敌军下落速度
+
+					//敌机和子弹的碰撞检测
+					var allBiu=Game.getClass("biu");
+					oEnemy.biuBoomTimer=setInterval(function(){
+						for(var i=0;i<allBiu.length;i++){
+								if(Game.boom(oEnemy,allBiu[i])){
+									Game.score++;
+									oS.innerHTML="Score:"+Game.score;
+									clearInterval(oEnemy.biuBoomTimer);
+									clearInterval(oEnemy.planeBoomTimer);
+									oEnemy.src="img/boom.png";
+									allBiu[i].parentNode.removeChild(allBiu[i]);
+									setTimeout(function(){
+										if(oEnemy.parentNode){
+											oEnemy.parentNode.removeChild(oEnemy);
+										}
+									},300);//0.3秒后清楚敌机
+									break;
+								}
+						}
+					},50);//设置刷新时间，尽量小一点，因为大了会导致打到了也没反应
+
+					//敌机和玩家的碰撞检测
+					var plane=document.getElementById("plane");
+					oEnemy.planeBoomTimer=setInterval(function(){
+						if(Game.boom(oEnemy,plane)){
+							clearInterval(oEnemy.planeBoomTimer);
+							clearInterval(Game.enemyTimer);
+							clearInterval(Game.biuTimer);
+							oEnemy.src="img/boom.png";
+							plane.src="img/boom2.png";
+							setTimeout(function(){
+								if(oEnemy.parentNode){
+									oEnemy.parentNode.removeChild(oEnemy);
+								}
+								Game.Over(oGameBox);
+							},300);
+						}
+					},50);
+
+
+				},200);//敌军生成速度
+			},
+			//规则:碰撞则游戏结束
+			boom:function(obj1,obj2){
+				var T1=obj1.offsetTop;
+				var B1=T1+obj1.clientHeight;
+				var L1=obj1.offsetLeft;
+				var R1=L1+obj1.clientWidth;
+
+				var T2=obj2.offsetTop;
+				var B2=T2+obj2.clientHeight;
+				var L2=obj2.offsetLeft;
+				var R2=L2+obj2.clientWidth;
+
+				if(B2<T1 || L2>R1 || T2>B1 || R2<L1){
+					return false;//没撞到
+				}else{
+					return true;//撞到了
+				}
+			},
+			//游戏结束Game Over
+			Over:function(oGameBox){
+				oGameBox.innerHTML="";//将游戏盒清空
+				var overDiv=document.createElement("div");
+						overDiv.style.cssText=
+						"width:200px;height:400px;position:absolute;top:50px;left:50px;background:#fff;";
+				var oT=document.createElement("h3");
+						oT.innerHTML="Game&nbsp;&nbsp;&nbsp;Over";
+						oT.style.cssText=
+						"padding-top:50px;font-size=20px";
+						overDiv.append(oT);
+				/*var overDiv1=document.createElement("div");
+						overDiv1.style.cssText=
+						"width:200px;height:20px;background:#fff;position:absolute;top:60px;";
+						overDiv.append(overDiv1);*/
+
+				var oP1=document.createElement("p");//将结束后的提示及分数显示到结束的div元素中
+						oP1.innerHTML="您的得分为："+"<span style='color:#f00;font-weight:bold;'>"+Game.score+"<span>";
+						oP1.style.cssText="font-size:16px;color:#333399;padding-top:20px;background:#fff;";
+				var oRestart=document.createElement("div");
+						oRestart.style.cssText="font-size:20px;width:100px;height:50px;text-align:center;line-height:40px;color:#000066;background:#cc3300;margin:100px auto;border-radius:30%;cursor:pointer;padding-top:10px;font-weight:bold;";
+						oRestart.innerHTML="RETRY";
+						oRestart.onclick=function(){
+							var oDiv=document.getElementById("oGameBox");
+							oDiv.innerHTML="";
+							Game.score=0;
+							Game.init();
+						};//重新开始
+						overDiv.append(oP1);
+						overDiv.append(oRestart);
+				oGameBox.append(overDiv);
+			},
+			//getClass方法
+			getClass:function(cName,parent){
+				parent=parent || document;//兼容性判断，如果有则返回父类，没有则返回document对象
+				if(document.getElementsByClassName){
+					return parent.getElementsByClassName(cName);//如果有该方法，就用该方法，有些浏览器是不支持的
+				}else{
+					var all=parent.getElementsByTagName("*");
+					var arr=[];
+					for(var i=0;i<all.length;i++){
+						var arrClass=all.className.split(" ");
+						for(var j=0;j<arrClass.length;j++){
+								if(arrClass[j]==cName){
+										arr.Push(all[i]);
+										break;
+								}
+						}
+					}
+					return arr;
+				}
+			}
+				
+		};
+	</script>
+	
+</body>
+</html>
